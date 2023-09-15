@@ -1,4 +1,4 @@
-from flask import Flask, request
+from flask import Flask, request, jsonify
 
 import discord
 from discord.ext import tasks
@@ -60,6 +60,10 @@ async def check_youtube_videos():
     else:
         print('No new video detected')
 
+async def stream_online_alert():
+    alert_message = 'Dratnos is live!\n' + f'https://twitch.tv/dratnos'
+    await discord_channel.send(alert_message)
+
 @client.event
 async def on_ready():
     print(f'We are logged in as {client.user}.')
@@ -76,10 +80,9 @@ app = Flask(__name__)
 
 @app.route('/webhook', methods=['POST'])
 def twitch_webhook():
-    data = request.json
-    stream_data = data['data']
-    if len(stream_data) > 0:
-        pass
+    print(request.data)
+
+    return jsonify({"message": "Webhook received successfully"}), 200
 
 # Get OAuth token
 auth_url = 'https://id.twitch.tv/oauth2/token'
@@ -103,16 +106,16 @@ payload = {
     "type": "stream.online",
     "version": "1",
     "condition": {
-        "broadcaster_user_id": twitch_channel_id
+        "broadcaster_user_id": f'{twitch_channel_id}'
     },
     "transport": {
         "method": "webhook",
-        "callback": 'http://localhost',
+        "callback": 'https://95ec-125-238-24-178.ngrok.io/webhook',
         "secret": "YourSecretString"  # Replace with your own secret string for verifying incoming notifications
     }
 }
 response = requests.post(webhook_url, headers=headers, json=payload)
-print(response.json())
+app.run(port=5000)
 
 # DratBot Launch Sequence
 # client.run(discord_secret)
